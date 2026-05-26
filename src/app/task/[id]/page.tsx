@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
-import { ArrowLeft, CheckCircle2, MessageSquare, Plus, UserCircle2, Heart, Paperclip, FileText, FileSpreadsheet, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, MessageSquare, Plus, UserCircle2, Heart, Paperclip, FileText, FileSpreadsheet, Loader2, Trash2, Pencil, History } from "lucide-react";
 import Link from "next/link";
 import { notFound, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -43,6 +43,15 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
             file_name,
             file_url,
             file_type
+          ),
+          task_histories (
+            id,
+            changed_summary,
+            created_at,
+            updater:users!task_histories_updated_by_fkey (
+              name,
+              role
+            )
           )
         `)
         .eq('id', id)
@@ -51,6 +60,12 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
       if (error) {
         console.error("Error fetching task:", error);
       } else {
+        // historiesをcreated_at降順に並べ替え
+        if (data && data.task_histories) {
+          data.task_histories.sort((a: any, b: any) => {
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          });
+        }
         setTask(data as unknown as Task);
       }
       setLoading(false);
@@ -229,21 +244,32 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
 
       {/* Header Info */}
       <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6 sm:p-8 relative">
-        {user && task.author_id === user.id && (
-          <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-            <button 
-              onClick={handleDeleteTaskClick}
-              disabled={deletingTask}
-              className={`transition-colors p-3 sm:p-2 rounded-lg flex items-center justify-center gap-1 text-sm font-bold min-h-[44px] min-w-[44px] ${
-                confirmTaskDelete ? 'bg-red-500 text-white hover:bg-red-600' : 'text-red-400 hover:text-red-600 hover:bg-red-50'
-              }`}
-              title="このマニュアルを削除"
+        {user && (
+          <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 flex gap-2">
+            <Link
+              href={`/task/${task.id}/edit`}
+              className="transition-colors p-2.5 rounded-lg flex items-center justify-center gap-1.5 text-sm font-bold min-h-[44px] bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-100 shadow-sm cursor-pointer"
+              title="このマニュアルを編集"
             >
-              {deletingTask ? <Loader2 className="animate-spin pointer-events-none" size={18} /> : <Trash2 className="pointer-events-none" size={18} />}
-              <span className={confirmTaskDelete ? "inline" : "hidden sm:inline"}>
-                {confirmTaskDelete ? "本当に削除？" : "削除"}
-              </span>
-            </button>
+              <Pencil size={18} />
+              <span className="hidden sm:inline">編集</span>
+            </Link>
+
+            {task.author_id === user.id && (
+              <button 
+                onClick={handleDeleteTaskClick}
+                disabled={deletingTask}
+                className={`transition-colors p-3 sm:p-2 rounded-lg flex items-center justify-center gap-1 text-sm font-bold min-h-[44px] min-w-[44px] cursor-pointer ${
+                  confirmTaskDelete ? 'bg-red-500 text-white hover:bg-red-600' : 'text-red-400 hover:text-red-600 hover:bg-red-50'
+                }`}
+                title="このマニュアルを削除"
+              >
+                {deletingTask ? <Loader2 className="animate-spin pointer-events-none" size={18} /> : <Trash2 className="pointer-events-none" size={18} />}
+                <span className={confirmTaskDelete ? "inline" : "hidden sm:inline"}>
+                  {confirmTaskDelete ? "本当に削除？" : "削除"}
+                </span>
+              </button>
+            )}
           </div>
         )}
         
@@ -320,6 +346,55 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
               </div>
             </div>
           )}
+
+          {/* 修正履歴（タイムライン）セクション */}
+          <div className="bg-white rounded-xl shadow-sm border border-indigo-100 overflow-hidden mt-6">
+            <div className="bg-indigo-50 px-6 py-4 border-b border-indigo-100 flex items-center gap-2">
+              <History className="text-indigo-600" size={20} />
+              <h2 className="text-lg font-bold text-indigo-900">マニュアル修正履歴</h2>
+            </div>
+            <div className="p-6">
+              {!(task as any).task_histories || (task as any).task_histories.length === 0 ? (
+                <p className="text-slate-500 text-sm">修正履歴はありません（初期バージョンです）。</p>
+              ) : (
+                <div className="relative pl-6 border-l-2 border-indigo-100 space-y-6">
+                  {(task as any).task_histories.map((history: any) => (
+                    <div key={history.id} className="relative">
+                      {/* タイムラインの丸 */}
+                      <span className="absolute -left-[31px] top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500 ring-4 ring-white">
+                        <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                      </span>
+                      
+                      <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-2 text-xs text-slate-500">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-slate-700 text-sm">
+                              {history.updater?.name || "名無し先生"}
+                            </span>
+                            <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded scale-90">
+                              {history.updater?.role || "教員"}
+                            </span>
+                          </div>
+                          <span>
+                            {history.created_at ? new Date(history.created_at).toLocaleString('ja-JP', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) : ""}
+                          </span>
+                        </div>
+                        <p className="text-slate-700 text-sm font-medium leading-relaxed">
+                          {history.changed_summary}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Right Column: Tips / Comments (SNS style) */}
