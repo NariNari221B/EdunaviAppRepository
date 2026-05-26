@@ -29,25 +29,17 @@ export default function LoginPage() {
         if (error) throw error;
         router.push("/");
       } else {
-        // サインアップ処理
+        // サインアップ処理（メタデータとしてお名前を送信し、データベース側トリガーで安全に自動登録）
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            data: {
+              name: name || "新しい先生"
+            }
+          }
         });
         if (error) throw error;
-        
-        // ユーザーテーブルにも登録
-        if (data.user) {
-          const { error: profileError } = await supabase.from('users').upsert({
-            id: data.user.id,
-            name: name || "新しい先生",
-            role: "教員",
-          }, { onConflict: 'id' });
-          if (profileError) {
-            console.error("Profile creation failed:", profileError);
-            throw new Error(`プロフィール作成に失敗しました: ${profileError.message}`);
-          }
-        }
         
         // セッションが直ちに作成された場合は自動ログイン、そうでない場合は確認メール待ちと判定
         if (data.session) {
