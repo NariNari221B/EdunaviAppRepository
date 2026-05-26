@@ -42,15 +42,22 @@ export default function LoginPage() {
             id: data.user.id,
             name: name || "新しい先生",
             role: "教員",
-          });
+          }, { onConflict: 'id' });
           if (profileError) {
             console.error("Profile creation failed:", profileError);
             throw new Error(`プロフィール作成に失敗しました: ${profileError.message}`);
           }
         }
         
-        alert("アカウントを作成しました！");
-        router.push("/");
+        // セッションが直ちに作成された場合は自動ログイン、そうでない場合は確認メール待ちと判定
+        if (data.session) {
+          alert("アカウントを作成し、ログインしました！");
+          router.push("/");
+        } else {
+          alert("アカウントを作成しました！ご登録のメールアドレスに確認メールを送信しましたので、メール内のリンクをクリックしてからログインしてください。");
+          setIsLogin(true); // ログイン画面へ切り替える
+          setPassword("");
+        }
       }
     } catch (err: any) {
       setErrorMsg(err.message || "エラーが発生しました");
