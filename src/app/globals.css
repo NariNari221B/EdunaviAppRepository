@@ -1,26 +1,54 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-indigo-50: #eef2ff;
+  --color-indigo-100: #e0e7ff;
+  --color-indigo-200: #c7d2fe;
+  --color-indigo-300: #a5b4fc;
+  --color-indigo-400: #818cf8;
+  --color-indigo-500: #6366f1;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-700: #4338ca;
+  --color-indigo-800: #3730a3;
+  --color-indigo-900: #312e81;
+
+  --font-sans: "Inter", "Hiragino Sans", "Meiryo", sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    font-size: 16px; /* slightly larger base for teachers */
   }
-}
+  body {
+    @apply bg-indigo-50 text-slate-800 antialiased font-sans;
+  }
+  
+  /* Font size scaling via wrapper */
+  .font-size-wrapper.normal {
+    /* base size */
+  }
+  .font-size-wrapper.large {
+    font-size: 1.15rem;
+  }
+  .font-size-wrapper.xlarge {
+    font-size: 1.3rem;
+  }
+  .font-size-wrapper.large h1, .font-size-wrapper.xlarge h1 { font-size: 1.2em; }
+  .font-size-wrapper.large h2, .font-size-wrapper.xlarge h2 { font-size: 1.2em; }
+  .font-size-wrapper.large h3, .font-size-wrapper.xlarge h3 { font-size: 1.2em; }
+  .font-size-wrapper.large p, .font-size-wrapper.xlarge p { font-size: 1.1em; }
+  .font-size-wrapper.large span, .font-size-wrapper.xlarge span { font-size: 1.1em; }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold text-slate-900;
+  }
+
+  /* Utility for hiding scrollbars but allowing scroll */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
