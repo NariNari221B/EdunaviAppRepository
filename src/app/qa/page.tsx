@@ -24,6 +24,9 @@ export default function QAPage() {
           author:users (
             name,
             role
+          ),
+          answers (
+            id
           )
         `)
         .order('created_at', { ascending: false });
@@ -147,6 +150,11 @@ export default function QAPage() {
                         <CheckCircle2 size={14} />
                         解決済
                       </span>
+                    ) : (q.answers?.length || 0) === 0 ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-red-100 text-red-700 border border-red-200 animate-pulse">
+                        <MessageCircleQuestion size={14} />
+                        未回答
+                      </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-100 text-slate-600">
                         <CircleDashed size={14} />
@@ -172,6 +180,12 @@ export default function QAPage() {
                     <span className="font-medium">{getAuthorDisplay(q)}</span>
                     <span>•</span>
                     <span>{new Date(q.created_at).toLocaleDateString('ja-JP')}</span>
+                    {q.answers && q.answers.length > 0 && (
+                      <>
+                        <span>•</span>
+                        <span className="font-bold text-pink-600">{q.answers.length}件の回答</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
