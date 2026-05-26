@@ -26,47 +26,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('name, role, avatar_url')
-      .eq('id', userId)
-      .single();
-    if (!error && data) {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('name, role, avatar_url')
+        .eq('id', userId)
+        .single();
+      if (error) throw error;
       setProfile(data);
-    } else {
+    } catch (err) {
+      console.error('Error fetching profile:', err);
       setProfile(null);
     }
   };
 
   useEffect(() => {
-    // 初回のセッション取得
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        await fetchProfile(currentUser.id);
-      }
-      setLoading(false);
-    };
-    
-    getSession();
+    let mounted = true;
 
-    // ログイン状態の変更を監視
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
         const currentUser = session?.user ?? null;
-        setUser(currentUser);
+        if (mounted) setUser(currentUser);
+        
         if (currentUser) {
           await fetchProfile(currentUser.id);
         } else {
-          setProfile(null);
+          if (mounted) setProfile(null);
         }
-        setLoading(false);
+      } catch (err) {
+        console.error('Error getting session:', err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    
+    initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'INITIAL_SESSION') return;
+        
+        const currentUser = session?.user ?? null;
+        if (mounted) setUser(currentUser);
+        
+        if (currentUser) {
+          await fetchProfile(currentUser.id);
+        } else {
+          if (mounted) setProfile(null);
+        }
+        if (mounted) setLoading(false);
       }
     );
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);

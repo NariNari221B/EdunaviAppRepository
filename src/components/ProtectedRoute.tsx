@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
@@ -9,14 +9,26 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [timeoutReached, setTimeoutReached] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user && pathname !== "/login") {
+    if (loading) {
+      const timer = setTimeout(() => {
+        console.warn("Auth loading timeout reached. Forcing resolution.");
+        setTimeoutReached(true);
+      }, 5000); // 5秒で強制的にローディング解除
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    const isActuallyLoading = loading && !timeoutReached;
+    if (!isActuallyLoading && !user && pathname !== "/login") {
       router.push("/login");
     }
-  }, [user, loading, router, pathname]);
+  }, [user, loading, timeoutReached, router, pathname]);
 
-  if (loading) {
+  if (loading && !timeoutReached) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4">
