@@ -77,7 +77,7 @@ export default function Header({ className = "" }: { className?: string }) {
       {/* Mobile Dropdown Navigation */}
       <div 
         className={`sm:hidden bg-indigo-700 overflow-hidden transition-all duration-300 ease-in-out ${
-          isMenuOpen ? "max-h-64 border-t border-indigo-500 shadow-inner" : "max-h-0"
+          isMenuOpen ? "max-h-96 border-t border-indigo-500 shadow-inner" : "max-h-0"
         }`}
       >
         <nav className="flex flex-col py-2 px-4 space-y-1">

@@ -66,7 +66,7 @@ export default function LoginPage() {
 
         <div className="p-8">
           <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">
-            {isLogin ? "ログイン" : "テスト用アカウント作成"}
+            {isLogin ? "ログイン" : "アカウント作成"}
           </h2>
 
           {errorMsg && (
@@ -155,7 +155,7 @@ export default function LoginPage() {
               className="text-indigo-600 hover:text-indigo-800 text-sm font-bold underline transition-colors"
             >
               {isLogin
-                ? "テスト用アカウント作成はこちら（サインアップ）"
+                ? "アカウントを作成する（サインアップ）"
                 : "すでにアカウントをお持ちの方はこちら（ログイン）"}
             </button>
           </div>
