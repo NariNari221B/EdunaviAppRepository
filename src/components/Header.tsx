@@ -1,15 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, Menu, X, LayoutDashboard, FolderOpen, Settings, LogOut, UserCircle, MessageCircleQuestion, Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Header({ className = "" }: { className?: string }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [unansweredCount, setUnansweredCount] = useState(0);
   const pathname = usePathname();
   const { user, profile, signOut } = useAuth();
+
+  useEffect(() => {
+    async function fetchUnansweredCount() {
+      if (!user) return; // Only fetch if logged in
+      const { data, error } = await supabase
+        .from('questions')
+        .select('id, answers(id)')
+        .eq('is_resolved', false);
+      
+      if (!error && data) {
+        const count = data.filter((q: any) => q.answers.length === 0).length;
+        setUnansweredCount(count);
+      }
+    }
+    fetchUnansweredCount();
+  }, [user, pathname]); // Re-fetch on route change (e.g. after answering)
 
   const closeMenu = () => setIsMenuOpen(false);
 
@@ -38,12 +56,17 @@ export default function Header({ className = "" }: { className?: string }) {
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
-              <Link 
+                <Link 
                 key={link.href}
                 href={link.href} 
                 className={`transition-colors flex items-center gap-1.5 hover:text-indigo-200 pb-1 border-b-2 ${isActive ? 'border-white' : 'border-transparent'}`}
               >
                 {link.label}
+                {link.href === '/qa' && unansweredCount > 0 && (
+                  <span className="bg-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full -ml-0.5">
+                    {unansweredCount}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -97,7 +120,12 @@ export default function Header({ className = "" }: { className?: string }) {
                 onClick={closeMenu}
               >
                 <Icon size={20} className={isActive ? "opacity-100" : "opacity-80"} />
-                {link.label}
+                <span>{link.label}</span>
+                {link.href === '/qa' && unansweredCount > 0 && (
+                  <span className="bg-pink-500 text-white text-xs font-bold px-2 py-0.5 rounded-full ml-auto">
+                    {unansweredCount}件未回答
+                  </span>
+                )}
               </Link>
             );
           })}
