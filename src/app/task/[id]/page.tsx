@@ -164,6 +164,45 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
     }
   };
 
+  const handleLikeTip = async (tipId: string) => {
+    if (!user) {
+      alert("いいねするにはログインが必要です");
+      return;
+    }
+    
+    try {
+      // Check if already liked
+      const { data: existing } = await supabase
+        .from('reactions')
+        .select('*')
+        .eq('tip_id', tipId)
+        .eq('user_id', user.id)
+        .single();
+        
+      if (existing) {
+        // Unlike
+        await supabase.from('reactions').delete().eq('id', existing.id);
+        setTask(prev => prev ? { 
+          ...prev, 
+          tips: prev.tips?.map(t => t.id === tipId ? { ...t, likes: Math.max(0, (t.likes || 1) - 1) } : t) 
+        } : null);
+      } else {
+        // Like
+        await supabase.from('reactions').insert({
+          tip_id: tipId,
+          user_id: user.id,
+          reaction_type: 'like'
+        });
+        setTask(prev => prev ? { 
+          ...prev, 
+          tips: prev.tips?.map(t => t.id === tipId ? { ...t, likes: (t.likes || 0) + 1 } : t) 
+        } : null);
+      }
+    } catch (err) {
+      console.error("Like error:", err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto flex flex-col items-center justify-center py-20">
@@ -322,7 +361,10 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
                       )}
                     </div>
                     <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap mb-3">{tip.content}</p>
-                    <div className="flex items-center gap-1 text-slate-400 hover:text-pink-500 transition-colors cursor-pointer w-fit">
+                    <div 
+                      onClick={() => handleLikeTip(tip.id)}
+                      className="flex items-center gap-1 text-slate-400 hover:text-pink-500 transition-colors cursor-pointer w-fit p-1 -ml-1 rounded-md hover:bg-pink-50"
+                    >
                       <Heart size={16} className={(tip.likes || 0) > 0 ? "fill-pink-100 text-pink-500" : ""} />
                       <span className="text-xs font-bold">{(tip.likes || 0) > 0 ? tip.likes : 'いいね'}</span>
                     </div>
