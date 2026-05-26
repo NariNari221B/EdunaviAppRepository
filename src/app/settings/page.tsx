@@ -45,8 +45,11 @@ export default function SettingsPage() {
     
     const { error } = await supabase
       .from('users')
-      .update({ name, role })
-      .eq('id', user.id);
+      .upsert({ 
+        id: user.id,
+        name, 
+        role 
+      }, { onConflict: 'id' });
       
     setIsSaving(false);
     
@@ -99,11 +102,15 @@ export default function SettingsPage() {
         .from('avatars')
         .getPublicUrl(fileName);
 
-      // 3. usersテーブルを更新
+      // 3. usersテーブルを更新（行がない場合は新規作成）
       const { error: updateError } = await supabase
         .from('users')
-        .update({ avatar_url: publicUrl })
-        .eq('id', user.id);
+        .upsert({ 
+          id: user.id,
+          avatar_url: publicUrl,
+          name: profile?.name || user.email?.split('@')[0],
+          role: profile?.role || "教員"
+        }, { onConflict: 'id' });
 
       if (updateError) throw updateError;
 

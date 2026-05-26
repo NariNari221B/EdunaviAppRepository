@@ -43,7 +43,10 @@ export default function LoginPage() {
             name: name || "新しい先生",
             role: "教員",
           });
-          if (profileError) console.error("Profile creation failed:", profileError);
+          if (profileError) {
+            console.error("Profile creation failed:", profileError);
+            throw new Error(`プロフィール作成に失敗しました: ${profileError.message}`);
+          }
         }
         
         alert("アカウントを作成しました！");
