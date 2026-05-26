@@ -17,7 +17,9 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
   const [newTip, setNewTip] = useState("");
   const [submittingTip, setSubmittingTip] = useState(false);
   const [deletingTask, setDeletingTask] = useState(false);
+  const [confirmTaskDelete, setConfirmTaskDelete] = useState(false);
   const [deletingTipId, setDeletingTipId] = useState<string | null>(null);
+  const [confirmTipId, setConfirmTipId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchTask() {
@@ -111,21 +113,24 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
     }
   };
 
-  const handleDeleteTask = async () => {
-    if (!confirm('この業務マニュアルを削除しますか？\n（添付ファイルやTipsもすべて削除されます）')) return;
-    
+  const handleDeleteTaskClick = () => {
+    if (confirmTaskDelete) {
+      executeDeleteTask();
+    } else {
+      setConfirmTaskDelete(true);
+      setTimeout(() => setConfirmTaskDelete(false), 3000);
+    }
+  };
+
+  const executeDeleteTask = async () => {
     setDeletingTask(true);
     try {
-      // ストレージから添付ファイルを削除
       if (task?.attachments && task.attachments.length > 0) {
         const filePaths = task.attachments.map(a => a.file_url);
         await supabase.storage.from('attachments').remove(filePaths);
       }
-      
-      // DBからタスクを削除（TipsとAttachmentsの行はCASCADEで自動削除される）
       const { error } = await supabase.from('tasks').delete().eq('id', id);
       if (error) throw error;
-      
       alert('削除しました。');
       router.push('/');
     } catch (err: any) {
@@ -135,20 +140,27 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
     }
   };
 
-  const handleDeleteTip = async (tipId: string) => {
-    if (!confirm('このTipsを削除しますか？')) return;
-    
+  const handleDeleteTipClick = (tipId: string) => {
+    if (confirmTipId === tipId) {
+      executeDeleteTip(tipId);
+    } else {
+      setConfirmTipId(tipId);
+      setTimeout(() => setConfirmTipId(null), 3000);
+    }
+  };
+
+  const executeDeleteTip = async (tipId: string) => {
     setDeletingTipId(tipId);
     try {
       const { error } = await supabase.from('tips').delete().eq('id', tipId);
       if (error) throw error;
-      
       setTask(prev => prev ? { ...prev, tips: prev.tips?.filter(t => t.id !== tipId) } : null);
     } catch (err: any) {
       console.error(err);
       alert('Tipsの削除に失敗しました: ' + err.message);
     } finally {
       setDeletingTipId(null);
+      setConfirmTipId(null);
     }
   };
 
@@ -181,13 +193,17 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
         {user && task.author_id === user.id && (
           <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
             <button 
-              onClick={handleDeleteTask}
+              onClick={handleDeleteTaskClick}
               disabled={deletingTask}
-              className="text-red-400 hover:text-red-600 transition-colors p-3 sm:p-2 rounded-lg hover:bg-red-50 flex items-center justify-center gap-1 text-sm font-medium min-h-[44px] min-w-[44px]"
+              className={`transition-colors p-3 sm:p-2 rounded-lg flex items-center justify-center gap-1 text-sm font-bold min-h-[44px] min-w-[44px] ${
+                confirmTaskDelete ? 'bg-red-500 text-white hover:bg-red-600' : 'text-red-400 hover:text-red-600 hover:bg-red-50'
+              }`}
               title="このマニュアルを削除"
             >
-              {deletingTask ? <Loader2 className="animate-spin" size={18} /> : <Trash2 size={18} />}
-              <span className="hidden sm:inline">削除</span>
+              {deletingTask ? <Loader2 className="animate-spin pointer-events-none" size={18} /> : <Trash2 className="pointer-events-none" size={18} />}
+              <span className={confirmTaskDelete ? "inline" : "hidden sm:inline"}>
+                {confirmTaskDelete ? "本当に削除？" : "削除"}
+              </span>
             </button>
           </div>
         )}
@@ -293,12 +309,15 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
                       </div>
                       {user && tip.author_id === user.id && (
                         <button 
-                          onClick={() => handleDeleteTip(tip.id)}
+                          onClick={() => handleDeleteTipClick(tip.id)}
                           disabled={deletingTipId === tip.id}
-                          className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                          className={`transition-colors p-2 rounded-lg flex items-center gap-1 text-xs font-bold min-h-[36px] ${
+                            confirmTipId === tip.id ? 'bg-red-500 text-white hover:bg-red-600' : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
+                          }`}
                           title="Tipsを削除"
                         >
-                          {deletingTipId === tip.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
+                          {deletingTipId === tip.id ? <Loader2 className="animate-spin pointer-events-none" size={16} /> : <Trash2 className="pointer-events-none" size={16} />}
+                          {confirmTipId === tip.id && <span>本当に削除？</span>}
                         </button>
                       )}
                     </div>
