@@ -10,6 +10,10 @@ import Header from '@/components/Header';
 export const metadata: Metadata = {
   title: 'EdunaviApp - 校務ナレッジ共有',
   description: '先生方のための校務ナレッジ共有アプリ',
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({
