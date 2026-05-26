@@ -83,7 +83,7 @@ export default function Header({ className = "" }: { className?: string }) {
               </div>
               <button 
                 onClick={signOut}
-                className="flex items-center gap-1 text-sm text-indigo-100 hover:text-white transition-colors"
+                className="flex items-center gap-1 text-sm text-indigo-100 hover:text-white transition-colors cursor-pointer"
                 title="ログアウト"
               >
                 <LogOut size={18} />
@@ -145,7 +145,7 @@ export default function Header({ className = "" }: { className?: string }) {
                   closeMenu();
                   signOut();
                 }}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium min-h-[44px] text-red-200 hover:bg-indigo-600 w-full text-left"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium min-h-[44px] text-red-200 hover:bg-indigo-600 w-full text-left cursor-pointer"
               >
                 <LogOut size={20} className="opacity-80" />
                 ログアウト
