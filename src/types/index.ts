@@ -1,4 +1,4 @@
-export type Tag = "校務" | "行事" | "ICT" | "提出書類" | "生徒指導" | "成績処理" | string;
+export type Tag = "校務" | "行事" | "ICT" | "提出書類" | "生徒指導" | "成績処理" | "その他" | "悩み相談" | string;
 
 export interface Tip {
   id: string;
@@ -35,4 +35,34 @@ export interface Task {
   updated_at: string;
   tips?: Tip[];
   attachments?: Attachment[];
+}
+
+export interface Answer {
+  id: string;
+  question_id: string;
+  author_id: string;
+  content: string;
+  is_best_answer: boolean;
+  is_anonymous: boolean;
+  created_at: string;
+  author?: {
+    name: string;
+    role: string;
+  };
+}
+
+export interface Question {
+  id: string;
+  title: string;
+  content: string;
+  author_id: string;
+  tags: Tag[];
+  is_resolved: boolean;
+  is_anonymous: boolean;
+  created_at: string;
+  author?: {
+    name: string;
+    role: string;
+  };
+  answers?: Answer[];
 }

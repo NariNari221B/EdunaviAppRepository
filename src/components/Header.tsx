@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Menu, X, LayoutDashboard, FolderOpen, Settings, LogOut, UserCircle } from "lucide-react";
+import { BookOpen, Menu, X, LayoutDashboard, FolderOpen, Settings, LogOut, UserCircle, MessageCircleQuestion, Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Header({ className = "" }: { className?: string }) {
@@ -16,6 +16,7 @@ export default function Header({ className = "" }: { className?: string }) {
   const navLinks = [
     { href: "/", label: "ダッシュボード", icon: LayoutDashboard },
     { href: "/knowledge", label: "すべてのナレッジ", icon: FolderOpen },
+    { href: "/qa", label: "Q&A", icon: MessageCircleQuestion },
     { href: "/settings", label: "各種設定", icon: Settings },
   ];
 
@@ -77,7 +78,7 @@ export default function Header({ className = "" }: { className?: string }) {
       {/* Mobile Dropdown Navigation */}
       <div 
         className={`sm:hidden bg-indigo-700 overflow-hidden transition-all duration-300 ease-in-out ${
-          isMenuOpen ? "max-h-96 border-t border-indigo-500 shadow-inner" : "max-h-0"
+          isMenuOpen ? "max-h-[500px] border-t border-indigo-500 shadow-inner" : "max-h-0"
         }`}
       >
         <nav className="flex flex-col py-2 px-4 space-y-1">
