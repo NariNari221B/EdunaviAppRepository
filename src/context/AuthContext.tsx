@@ -88,7 +88,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      // セッションの有無に関わらず強制的に状態をリセット
+      setUser(null);
+      setProfile(null);
+      window.location.href = "/login";
+    }
   };
 
   const refreshProfile = async () => {
