@@ -255,7 +255,6 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
               <span className="hidden sm:inline">編集</span>
             </Link>
 
-            {task.author_id === user.id && (
               <button 
                 onClick={handleDeleteTaskClick}
                 disabled={deletingTask}
@@ -269,7 +268,6 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
                   {confirmTaskDelete ? "本当に削除？" : "削除"}
                 </span>
               </button>
-            )}
           </div>
         )}
         
