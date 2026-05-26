@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 
 interface AuthContextType {
   user: User | null;
-  profile: { name: string; role: string } | null;
+  profile: { name: string; role: string; avatar_url?: string | null } | null;
   loading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -22,13 +22,13 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<{ name: string; role: string } | null>(null);
+  const [profile, setProfile] = useState<{ name: string; role: string; avatar_url?: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('users')
-      .select('name, role')
+      .select('name, role, avatar_url')
       .eq('id', userId)
       .single();
     if (!error && data) {

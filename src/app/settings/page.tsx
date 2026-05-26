@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { User, Settings, Type, Save, Loader2, Lock } from "lucide-react";
+import { useState, useRef } from "react";
+import { User, Settings, Type, Save, Loader2, Lock, Camera, AlertCircle } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabaseClient";
+import UserAvatar from "@/components/UserAvatar";
 import { useEffect } from "react";
 
 export default function SettingsPage() {
@@ -15,6 +16,11 @@ export default function SettingsPage() {
   const [role, setRole] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [showSavedMsg, setShowSavedMsg] = useState(false);
+
+  // プロフィール画像用の状態
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // パスワード変更用の状態
   const [newPassword, setNewPassword] = useState("");
@@ -50,6 +56,69 @@ export default function SettingsPage() {
       setShowSavedMsg(true);
       await refreshProfile(); // Contextの情報を更新してヘッダー等に反映
       setTimeout(() => setShowSavedMsg(false), 3000);
+    }
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // バリデーション
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      setUploadError("JPG, PNG, WebP形式の画像のみアップロード可能です。");
+      return;
+    }
+    
+    // 2MB = 2 * 1024 * 1024 bytes
+    if (file.size > 2 * 1024 * 1024) {
+      setUploadError("画像サイズは2MB以下にしてください。");
+      return;
+    }
+
+    setUploadError("");
+    setIsUploading(true);
+
+    try {
+      // ファイル名の生成（キャッシュ対策でタイムスタンプを付与）
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      // 1. Storageにアップロード
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      // 2. 公開URLを取得
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      // 3. usersテーブルを更新
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      // 4. コンテキスト（UI）を更新
+      await refreshProfile();
+      
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      setUploadError("画像のアップロードに失敗しました: " + err.message);
+    } finally {
+      setIsUploading(false);
+      // 入力値をリセットして同じファイルを再度選択できるようにする
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -102,15 +171,34 @@ export default function SettingsPage() {
           </div>
           
           <form onSubmit={handleSave} className="p-6 space-y-6">
-            <div className="flex items-center gap-6">
-              <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-400 shrink-0">
-                <User size={40} />
-              </div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+              <UserAvatar avatarUrl={profile?.avatar_url} name={name} size={80} />
               <div className="flex-1">
-                <button type="button" className="text-sm text-indigo-600 font-bold border border-indigo-200 px-4 py-2 rounded-lg hover:bg-indigo-50 transition-colors">
-                  画像を変更する
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/jpg"
+                  className="hidden"
+                  ref={fileInputRef}
+                  onChange={handleAvatarChange}
+                />
+                <button 
+                  type="button" 
+                  disabled={isUploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-sm text-indigo-600 font-bold border border-indigo-200 px-4 py-2 rounded-lg hover:bg-indigo-50 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isUploading ? <Loader2 className="animate-spin" size={16} /> : <Camera size={16} />}
+                  {isUploading ? "アップロード中..." : "画像を変更する"}
                 </button>
-                <p className="text-xs text-slate-400 mt-2">※現在はモック機能です</p>
+                <p className="text-xs text-slate-500 mt-2">
+                  JPG, PNG, WebP形式・最大2MBまで
+                </p>
+                {uploadError && (
+                  <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
+                    <AlertCircle size={14} />
+                    {uploadError}
+                  </p>
+                )}
               </div>
             </div>
 

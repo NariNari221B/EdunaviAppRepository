@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Menu, X, LayoutDashboard, FolderOpen, Settings, LogOut, UserCircle, MessageCircleQuestion, Plus } from "lucide-react";
+import { BookOpen, Menu, X, LayoutDashboard, FolderOpen, Settings, LogOut, MessageCircleQuestion, Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import UserAvatar from "@/components/UserAvatar";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function Header({ className = "" }: { className?: string }) {
@@ -72,8 +73,8 @@ export default function Header({ className = "" }: { className?: string }) {
           })}
           {user && (
             <div className="flex items-center gap-4 ml-4 border-l border-indigo-400 pl-4">
-              <div className="flex items-center gap-1.5 text-sm">
-                <UserCircle size={18} className="opacity-80" />
+              <div className="flex items-center gap-2 text-sm">
+                <UserAvatar avatarUrl={profile?.avatar_url} name={profile?.name} size={28} />
                 <span className="font-bold">{profile?.name || user.email?.split('@')[0]}</span>
               </div>
               <button 
@@ -132,7 +133,7 @@ export default function Header({ className = "" }: { className?: string }) {
           {user && (
             <div className="mt-4 pt-4 border-t border-indigo-500">
               <div className="flex items-center gap-3 px-4 py-2 text-indigo-100">
-                <UserCircle size={20} />
+                <UserAvatar avatarUrl={profile?.avatar_url} name={profile?.name} size={32} />
                 <span className="font-bold">{profile?.name || user.email?.split('@')[0]}</span>
               </div>
               <button 
