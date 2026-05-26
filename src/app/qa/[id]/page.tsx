@@ -225,47 +225,47 @@ export default function QuestionDetail({ params }: { params: Promise<{ id: strin
       </Link>
 
       {/* Question Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
-        {user && question.author_id === user.id && (
-          <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className={`px-6 py-4 border-b flex flex-wrap items-center justify-between gap-3 ${
+          question.is_resolved ? 'bg-green-50 border-green-100' : 'bg-slate-50 border-slate-100'
+        }`}>
+          <div className="flex items-center gap-3">
+            {question.is_resolved ? (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold bg-green-100 text-green-800">
+                <CheckCircle2 size={16} />
+                解決済
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold bg-pink-100 text-pink-800">
+                <MessageSquare size={16} />
+                質問・受付中
+              </span>
+            )}
+            
+            <div className="flex gap-2 flex-wrap">
+              {question.tags.map(tag => (
+                <span key={tag} className="text-xs font-bold text-slate-600 bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-sm">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {user && question.author_id === user.id && (
             <button 
               onClick={handleDeleteQuestionClick}
               disabled={deletingQuestion}
-              className={`transition-colors p-3 sm:p-2 rounded-lg flex items-center justify-center gap-1 text-sm font-bold min-h-[44px] min-w-[44px] ${
-                confirmQuestionDelete ? 'bg-red-500 text-white hover:bg-red-600' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'
+              className={`transition-colors p-2 rounded-lg flex items-center justify-center gap-1 text-sm font-bold min-h-[36px] ${
+                confirmQuestionDelete ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-white border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 shadow-sm'
               }`}
               title="この質問を削除"
             >
-              {deletingQuestion ? <Loader2 className="animate-spin pointer-events-none" size={18} /> : <Trash2 className="pointer-events-none" size={18} />}
+              {deletingQuestion ? <Loader2 className="animate-spin pointer-events-none" size={16} /> : <Trash2 className="pointer-events-none" size={16} />}
               <span className={confirmQuestionDelete ? "inline" : "hidden sm:inline"}>
                 {confirmQuestionDelete ? "本当に削除？" : "削除"}
               </span>
             </button>
-          </div>
-        )}
-        
-        <div className={`px-6 py-4 border-b flex items-center gap-3 ${
-          question.is_resolved ? 'bg-green-50 border-green-100' : 'bg-slate-50 border-slate-100'
-        }`}>
-          {question.is_resolved ? (
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold bg-green-100 text-green-800">
-              <CheckCircle2 size={16} />
-              解決済
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold bg-pink-100 text-pink-800">
-              <MessageSquare size={16} />
-              質問・受付中
-            </span>
           )}
-          
-          <div className="flex gap-2 flex-wrap ml-auto pr-16 sm:pr-0">
-            {question.tags.map(tag => (
-              <span key={tag} className="text-xs font-bold text-slate-600 bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-sm">
-                {tag}
-              </span>
-            ))}
-          </div>
         </div>
 
         <div className="p-6 sm:p-8">
