@@ -1,20 +1,23 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
-import { ArrowLeft, CheckCircle2, MessageSquare, Plus, UserCircle2, Heart, Paperclip, FileText, FileSpreadsheet, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, MessageSquare, Plus, UserCircle2, Heart, Paperclip, FileText, FileSpreadsheet, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/context/AuthContext";
 import { Task, Tip } from "@/types";
 
 export default function TaskDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const { user } = useAuth();
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [newTip, setNewTip] = useState("");
   const [submittingTip, setSubmittingTip] = useState(false);
+  const [deletingTask, setDeletingTask] = useState(false);
+  const [deletingTipId, setDeletingTipId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchTask() {
@@ -27,6 +30,7 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
             content,
             created_at,
             likes,
+            author_id,
             author:users (
               name,
               role
@@ -72,6 +76,7 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
         content,
         created_at,
         likes,
+        author_id,
         author:users (
           name,
           role
@@ -106,6 +111,47 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
     }
   };
 
+  const handleDeleteTask = async () => {
+    if (!confirm('この業務マニュアルを削除しますか？\n（添付ファイルやTipsもすべて削除されます）')) return;
+    
+    setDeletingTask(true);
+    try {
+      // ストレージから添付ファイルを削除
+      if (task?.attachments && task.attachments.length > 0) {
+        const filePaths = task.attachments.map(a => a.file_url);
+        await supabase.storage.from('attachments').remove(filePaths);
+      }
+      
+      // DBからタスクを削除（TipsとAttachmentsの行はCASCADEで自動削除される）
+      const { error } = await supabase.from('tasks').delete().eq('id', id);
+      if (error) throw error;
+      
+      alert('削除しました。');
+      router.push('/');
+    } catch (err: any) {
+      console.error(err);
+      alert('削除に失敗しました: ' + err.message);
+      setDeletingTask(false);
+    }
+  };
+
+  const handleDeleteTip = async (tipId: string) => {
+    if (!confirm('このTipsを削除しますか？')) return;
+    
+    setDeletingTipId(tipId);
+    try {
+      const { error } = await supabase.from('tips').delete().eq('id', tipId);
+      if (error) throw error;
+      
+      setTask(prev => prev ? { ...prev, tips: prev.tips?.filter(t => t.id !== tipId) } : null);
+    } catch (err: any) {
+      console.error(err);
+      alert('Tipsの削除に失敗しました: ' + err.message);
+    } finally {
+      setDeletingTipId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto flex flex-col items-center justify-center py-20">
@@ -131,8 +177,22 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
       </Link>
 
       {/* Header Info */}
-      <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6 sm:p-8">
-        <div className="flex gap-2 mb-4">
+      <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6 sm:p-8 relative">
+        {user && task.author_id === user.id && (
+          <div className="absolute top-6 right-6">
+            <button 
+              onClick={handleDeleteTask}
+              disabled={deletingTask}
+              className="text-red-400 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50 flex items-center gap-1 text-sm font-medium"
+              title="このマニュアルを削除"
+            >
+              {deletingTask ? <Loader2 className="animate-spin" size={18} /> : <Trash2 size={18} />}
+              <span className="hidden sm:inline">削除</span>
+            </button>
+          </div>
+        )}
+        
+        <div className="flex gap-2 mb-4 pr-16">
           {task.tags.map((tag) => (
             <span
               key={tag}
@@ -223,12 +283,24 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
               ) : (
                 (task.tips || []).map((tip) => (
                   <div key={tip.id} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <UserCircle2 className="text-slate-400" size={24} />
-                      <div>
-                        <p className="font-bold text-slate-800 text-sm leading-none">{tip.author?.name || "匿名"}</p>
-                        <p className="text-xs text-slate-500 mt-1">{tip.author?.role || ""} • {tip.created_at ? new Date(tip.created_at).toLocaleDateString('ja-JP') : ""}</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <UserCircle2 className="text-slate-400" size={24} />
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm leading-none">{tip.author?.name || "匿名"}</p>
+                          <p className="text-xs text-slate-500 mt-1">{tip.author?.role || ""} • {tip.created_at ? new Date(tip.created_at).toLocaleDateString('ja-JP') : ""}</p>
+                        </div>
                       </div>
+                      {user && tip.author_id === user.id && (
+                        <button 
+                          onClick={() => handleDeleteTip(tip.id)}
+                          disabled={deletingTipId === tip.id}
+                          className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                          title="Tipsを削除"
+                        >
+                          {deletingTipId === tip.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
+                        </button>
+                      )}
                     </div>
                     <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap mb-3">{tip.content}</p>
                     <div className="flex items-center gap-1 text-slate-400 hover:text-pink-500 transition-colors cursor-pointer w-fit">
