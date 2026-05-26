@@ -48,9 +48,6 @@ export default function QAPage() {
 
   const getAuthorDisplay = (q: Question) => {
     if (q.is_anonymous) {
-      if (q.author?.role) {
-        return `${q.author.role}の先生（匿名）`;
-      }
       return "匿名希望の先生";
     }
     return q.author?.name || "名無し先生";

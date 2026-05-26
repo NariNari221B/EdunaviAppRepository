@@ -195,9 +195,6 @@ export default function QuestionDetail({ params }: { params: Promise<{ id: strin
 
   const getAuthorDisplay = (item: Question | Answer) => {
     if (item.is_anonymous) {
-      if (item.author?.role) {
-        return `${item.author.role}の先生（匿名）`;
-      }
       return "匿名希望の先生";
     }
     return item.author?.name || "名無し先生";

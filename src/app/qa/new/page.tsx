@@ -163,7 +163,7 @@ export default function NewQuestionPage() {
               </label>
               <p className="text-xs text-slate-500 mt-1 flex items-start gap-1">
                 <Info size={14} className="flex-shrink-0 mt-0.5" />
-                チェックを入れると、一覧や詳細画面であなたの名前の代わりに「匿名希望の先生」または「〇〇（役職）の先生」と表示されます。
+                チェックを入れると、一覧や詳細画面であなたの名前の代わりに「匿名希望の先生」と表示されます。
               </p>
             </div>
           </div>
