@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         console.error('Error getting session:', err);
       } finally {
-        if (mounted) setLoading(false);
+        setLoading(false);
       }
     };
     
@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           if (mounted) setProfile(null);
         }
-        if (mounted) setLoading(false);
+        setLoading(false);
       }
     );
 
