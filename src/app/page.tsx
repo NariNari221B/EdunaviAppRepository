@@ -20,22 +20,29 @@ export default function Home() {
   useEffect(() => {
     async function fetchTasks() {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('tasks')
-        .select(`
-          *,
-          tips (
-            id,
-            likes
-          )
-        `);
-      
-      if (error) {
-        console.error("Error fetching tasks:", error);
-      } else {
-        setTasks(data as Task[] || []);
+      try {
+        const { data, error } = await supabase
+          .from('tasks')
+          .select(`
+            *,
+            tips (
+              id,
+              likes
+            )
+          `);
+        
+        if (error) {
+          console.error("Error fetching tasks:", error);
+          setTasks([]);
+        } else {
+          setTasks((data as Task[]) || []);
+        }
+      } catch (err) {
+        console.error("Exception in fetchTasks:", err);
+        setTasks([]);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     
     fetchTasks();

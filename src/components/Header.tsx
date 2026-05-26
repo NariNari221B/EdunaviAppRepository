@@ -17,14 +17,18 @@ export default function Header({ className = "" }: { className?: string }) {
   useEffect(() => {
     async function fetchUnansweredCount() {
       if (!user) return; // Only fetch if logged in
-      const { data, error } = await supabase
-        .from('questions')
-        .select('id, answers(id)')
-        .eq('is_resolved', false);
-      
-      if (!error && data) {
-        const count = data.filter((q: any) => q.answers.length === 0).length;
-        setUnansweredCount(count);
+      try {
+        const { data, error } = await supabase
+          .from('questions')
+          .select('id, answers(id)')
+          .eq('is_resolved', false);
+        
+        if (!error && data) {
+          const count = data.filter((q: any) => !q.answers || !Array.isArray(q.answers) || q.answers.length === 0).length;
+          setUnansweredCount(count);
+        }
+      } catch (err) {
+        console.error("Error fetching unanswered count:", err);
       }
     }
     fetchUnansweredCount();
