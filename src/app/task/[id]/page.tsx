@@ -179,11 +179,11 @@ export default function TaskDetail({ params }: { params: Promise<{ id: string }>
       {/* Header Info */}
       <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6 sm:p-8 relative">
         {user && task.author_id === user.id && (
-          <div className="absolute top-6 right-6">
+          <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
             <button 
               onClick={handleDeleteTask}
               disabled={deletingTask}
-              className="text-red-400 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50 flex items-center gap-1 text-sm font-medium"
+              className="text-red-400 hover:text-red-600 transition-colors p-3 sm:p-2 rounded-lg hover:bg-red-50 flex items-center justify-center gap-1 text-sm font-medium min-h-[44px] min-w-[44px]"
               title="このマニュアルを削除"
             >
               {deletingTask ? <Loader2 className="animate-spin" size={18} /> : <Trash2 size={18} />}
